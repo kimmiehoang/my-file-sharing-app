@@ -157,11 +157,22 @@ public class Client implements Runnable {
         String folderPath = "receivedFile/";
         String filePath = folderPath + filename;
 
+        // Kiểm tra xem thư mục lưu trữ đã tồn tại chưa
+        File folder = new File(folderPath);
+        if (!folder.exists()) {
+            // Nếu chưa tồn tại, tạo mới
+            if (folder.mkdirs()) {
+                System.out.println("Folder created: " + folderPath);
+            }
+        }
+
         // Kiểm tra xem file đã tồn tại chưa
         File file = new File(filePath);
-        if (file.exists()) {
-            System.out.println("File already exists: " + filename);
-            return;
+        int i = 1;
+        while (file.exists()) {
+            filePath = filePath + "(" + Integer.toString(i) + ")";
+            file = new File(filePath);
+            // return;
         }
 
         // Tạo mới file nếu nó chưa tồn tại
