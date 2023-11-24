@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Enumeration;
 
 public class Client implements Runnable {
 
@@ -10,12 +11,40 @@ public class Client implements Runnable {
     private static BufferedReader inputLine = null;
     private static boolean sign = false;
     private static FileRepository localRepository;
+    private static String host;
 
     public static void main(String[] args) {
         try {
+            try {
+                Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+                while (networkInterfaces.hasMoreElements()) {
+                    NetworkInterface networkInterface = networkInterfaces.nextElement();
+                    if (networkInterface.getName().startsWith("w")) {
+                        Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                        while (inetAddresses.hasMoreElements()) {
+                            InetAddress inetAddress = inetAddresses.nextElement();
+                            if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(":") == -1) {
+                                host = inetAddress.getHostAddress();
+                                System.out.println("WiFi IPv4 Address: " + inetAddress.getHostAddress());
+                            }
+                        }
+                    }
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
 
-            socketOfClient = new Socket("localhost", 9000);
-            serverSocket = new ServerSocket(0);
+            socketOfClient = new Socket("192.168.1.5", 9000);
+            // serverSocket = new ServerSocket(0);
+            serverSocket = new ServerSocket(0, 50, InetAddress.getByName(host));
+            // Addr = InetAddress.getLocalHost();
+            // String host = Addr.getHostAddress();
+            // System.out.println(InetAddress.getByName("192.168.1.5"));
+
+            // serverSocket = new ServerSocket(0, 50, Addr);
+
+            // System.out.println(Addr);
+
             new Thread(new Client()).start();
             os = new ObjectOutputStream(socketOfClient.getOutputStream());
             is = new ObjectInputStream(socketOfClient.getInputStream());
@@ -188,7 +217,7 @@ public class Client implements Runnable {
         try {
             while (true) {
                 Socket peerServer = serverSocket.accept();
-                System.out.println("peer server work");
+                // System.out.println("peer server work");
                 peerConnection peerHandler = new peerConnection(peerServer);
                 peerHandler.start();
             }

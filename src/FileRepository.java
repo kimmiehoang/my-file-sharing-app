@@ -45,7 +45,6 @@ public class FileRepository {
     }
 
     public byte[] getFileContent(String fileName) {
-        System.out.println("here is the problem");
         return files.get(fileName);
     }
 }
