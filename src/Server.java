@@ -101,7 +101,7 @@ public class Server {
 
                     os.writeObject(targetAddr);
                     os.flush();
-                } else if (cmd.startsWith("/quit")) {
+                } else if (cmd.startsWith("QUIT")) {
                     os.writeObject(
                             "Goodbye " + hostname + ". Thanks for taking your time to use our file sharing app.");
                     os.flush();

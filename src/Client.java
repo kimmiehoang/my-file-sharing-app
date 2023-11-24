@@ -32,95 +32,120 @@ public class Client implements Runnable {
 
         if (socketOfClient != null && serverSocket != null && os != null && is != null) {
             try {
-
-                System.out.print("Enter your hostname: ");
-                String hostname = inputLine.readLine().trim();
-
-                os.writeObject(hostname);
-                os.flush();
-
-                os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
-                os.flush();
-                System.out.print("serverSocket: " + serverSocket.getInetAddress());
-
-                os.writeObject(serverSocket.getInetAddress());
-                os.flush();
-
-                String responseLine = (String) is.readObject();
-                System.out.println(responseLine);
-                System.out.println(
-                        "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. quit: log out");
-
                 while (!sign) {
+                    String responseLine;
+                    // Kiểm tra xem có đủ tham số không
+                    if (args.length > 0) {
+                        // Lấy tham số đầu tiên từ dòng lệnh
+                        String command = args[0];
 
-                    System.out.print("Enter your command: ");
-                    String cmd = inputLine.readLine().trim();
+                        // Xử lý lệnh
+                        switch (command) {
+                            case "HOSTNAME":
+                                if (args.length >= 2) {
+                                    String hostname = args[1];
+                                    os.writeObject(hostname);
+                                    os.flush();
 
-                    if (cmd.startsWith("PUBLISH")) {
-                        os.writeObject(cmd);
-                        os.flush();
-                        String[] data = cmd.split(" ");
-                        publish(data[1], data[2]);
+                                    os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
+                                    os.flush();
+                                    System.out.print("serverSocket: " + serverSocket.getInetAddress());
 
-                        responseLine = (String) is.readObject();
-                        System.out.println(responseLine);
+                                    os.writeObject(serverSocket.getInetAddress());
+                                    os.flush();
 
-                    } else if (cmd.startsWith("FETCH")) {
-                        os.writeObject(cmd);
-                        os.flush();
+                                    responseLine = (String) is.readObject();
+                                    System.out.println(responseLine);
+                                    System.out.println(
+                                            "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. quit: log out");
 
-                        String[] data = cmd.split(" ");
-                        String filename = data[1];
+                                } else {
+                                    System.out.println("Invalid HOSTNAME command. Usage: HOSTNAME name");
+                                }
+                                break;
 
-                        responseLine = (String) is.readObject();
-                        if (responseLine.equals("")) {
-                            System.out.println("Sorry. No clients have got your requested file");
-                            continue;
+                            case "PUBLISH":
+                                // Xử lý lệnh PUBLISH
+                                if (args.length >= 3) {
+                                    String filename = args[1];
+                                    String filepath = args[2];
+                                    os.writeObject("PUBLISH");
+                                    os.flush();
+
+                                    publish(filename, filepath);
+
+                                    responseLine = (String) is.readObject();
+                                    System.out.println(responseLine);
+                                } else {
+                                    System.out.println("Invalid PUBLISH command. Usage: PUBLISH filename filepath");
+                                }
+                                break;
+
+                            case "FETCH":
+                                if (args.length >= 2) {
+                                    String filename = args[1];
+                                    os.writeObject("FETCH");
+                                    os.flush();
+
+                                    responseLine = (String) is.readObject();
+                                    if (responseLine.equals("")) {
+                                        System.out.println("Sorry. No clients have got your requested file");
+                                        // continue;
+                                    }
+                                    System.out.println(responseLine);
+
+                                    System.out.print("Select one hostname from hostname list above: ");
+                                    String targetClient = inputLine.readLine().trim();
+
+                                    os.writeObject(targetClient);
+                                    os.flush();
+
+                                    int portNum = ((Integer) is.readObject()).intValue();
+
+                                    InetAddress targetAddr = (InetAddress) is.readObject();
+                                    System.out.println(targetAddr);
+                                    Socket peerClient = new Socket(targetAddr, portNum);
+
+                                    ObjectOutputStream peerOs = new ObjectOutputStream(peerClient.getOutputStream());
+                                    ObjectInputStream peerIs = new ObjectInputStream(peerClient.getInputStream());
+
+                                    peerOs.writeObject(filename);
+                                    peerOs.flush();
+
+                                    /////// xử lý file content nhận được
+
+                                    byte[] fileContent = (byte[]) peerIs.readObject();
+                                    System.out.println(fileContent);
+
+                                    String newFileName = "newFile.txt";
+                                    saveFile(newFileName, fileContent);
+
+                                    localRepository.files.put(filename, fileContent);
+
+                                    System.out.println(filename + " was downloaded successfully");
+
+                                    peerIs.close();
+                                    peerOs.close();
+                                    peerClient.close();
+                                } else {
+                                    System.out.println("Invalid FETCH command. Usage: FETCH filename");
+                                }
+                                break;
+                            case "QUIT":
+                                responseLine = (String) is.readObject();
+                                System.out.println(responseLine);
+                                if (responseLine.startsWith("Goodbye")) {
+                                    sign = true;
+                                }
+
+                            default:
+                                System.out.println("Unknown command: " + command);
+                                break;
                         }
-                        System.out.println(responseLine);
-
-                        System.out.print("Select one hostname from hostname list above: ");
-                        String targetClient = inputLine.readLine().trim();
-
-                        os.writeObject(targetClient);
-                        os.flush();
-
-                        int portNum = ((Integer) is.readObject()).intValue();
-
-                        InetAddress targetAddr = (InetAddress) is.readObject();
-                        System.out.println(targetAddr);
-                        Socket peerClient = new Socket(targetAddr, portNum);
-
-                        ObjectOutputStream peerOs = new ObjectOutputStream(peerClient.getOutputStream());
-                        ObjectInputStream peerIs = new ObjectInputStream(peerClient.getInputStream());
-
-                        peerOs.writeObject(filename);
-                        peerOs.flush();
-
-                        /////// xử lý file content nhận được
-
-                        byte[] fileContent = (byte[]) peerIs.readObject();
-                        System.out.println(fileContent);
-
-                        String newFileName = "newFile.txt";
-                        saveFile(newFileName, fileContent);
-
-                        localRepository.files.put(filename, fileContent);
-
-                        System.out.println(filename + " was downloaded successfully");
-
-                        peerIs.close();
-                        peerOs.close();
-                        peerClient.close();
                     } else {
-                        responseLine = (String) is.readObject();
-                        System.out.println(responseLine);
-                        if (responseLine.startsWith("Goodbye")) {
-                            sign = true;
-                        }
+                        System.out.println("No command provided.");
                     }
                 }
-
                 os.close();
                 is.close();
                 socketOfClient.close();
