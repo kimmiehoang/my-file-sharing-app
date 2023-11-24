@@ -25,7 +25,7 @@ public class Client implements Runnable {
                             InetAddress inetAddress = inetAddresses.nextElement();
                             if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(":") == -1) {
                                 host = inetAddress.getHostAddress();
-                                System.out.println("WiFi IPv4 Address: " + inetAddress.getHostAddress());
+                                // System.out.println("WiFi IPv4 Address: " + inetAddress.getHostAddress());
                             }
                         }
                     }
@@ -70,7 +70,7 @@ public class Client implements Runnable {
 
                 os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
                 os.flush();
-                System.out.print("serverSocket: " + serverSocket.getInetAddress());
+                // System.out.print("serverSocket: " + serverSocket.getInetAddress());
 
                 os.writeObject(serverSocket.getInetAddress());
                 os.flush();
@@ -78,7 +78,7 @@ public class Client implements Runnable {
                 String responseLine = (String) is.readObject();
                 System.out.println(responseLine);
                 System.out.println(
-                        "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. quit: log out");
+                        "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. QUIT");
 
                 while (!sign) {
 
@@ -117,7 +117,7 @@ public class Client implements Runnable {
                         int portNum = ((Integer) is.readObject()).intValue();
 
                         InetAddress targetAddr = (InetAddress) is.readObject();
-                        System.out.println(targetAddr);
+                        // System.out.println(targetAddr);
                         Socket peerClient = new Socket(targetAddr, portNum);
 
                         ObjectOutputStream peerOs = new ObjectOutputStream(peerClient.getOutputStream());
@@ -129,7 +129,7 @@ public class Client implements Runnable {
                         /////// xử lý file content nhận được
 
                         byte[] fileContent = (byte[]) peerIs.readObject();
-                        System.out.println(fileContent);
+                        System.out.println(fileContent + "bbbb");
 
                         String newFileName = "newFile.txt";
                         saveFile(newFileName, fileContent);
@@ -142,6 +142,7 @@ public class Client implements Runnable {
                         peerOs.close();
                         peerClient.close();
                     } else {
+                        os.writeObject("QUIT");
                         responseLine = (String) is.readObject();
                         System.out.println(responseLine);
                         if (responseLine.startsWith("Goodbye")) {
@@ -239,16 +240,16 @@ public class Client implements Runnable {
         public void run() {
             try {
                 is = new ObjectInputStream(peerServer.getInputStream());
-                System.out.println(is);
+                // System.out.println(is);
                 os = new ObjectOutputStream(peerServer.getOutputStream());
             } catch (IOException e) {
                 e.printStackTrace();
             }
             try {
                 String requestedFile = (String) is.readObject();
-                System.out.println(requestedFile);
+                // System.out.println(requestedFile);
 
-                System.out.println("The requested file is " + requestedFile);
+                // System.out.println("The requested file is " + requestedFile);
                 byte[] fileContent = localRepository.getFileContent(requestedFile);
 
                 os.writeObject(fileContent);
