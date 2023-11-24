@@ -51,9 +51,6 @@ public class Client implements Runnable {
                 System.out.println(
                         "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. quit: log out");
 
-                // Thread peerHandlerThread = new Thread(new Client());
-                // peerHandlerThread.start();
-                // new Thread(new Client()).start();
                 while (!sign) {
 
                     System.out.print("Enter your command: ");
@@ -85,24 +82,15 @@ public class Client implements Runnable {
                         System.out.print("Select one hostname from hostname list above: ");
                         String targetClient = inputLine.readLine().trim();
 
-                        // System.out.println("this client is " + targetClient);
-
                         os.writeObject(targetClient);
                         os.flush();
 
                         int portNum = ((Integer) is.readObject()).intValue();
-                        // System.out.println(portNum);
 
                         InetAddress targetAddr = (InetAddress) is.readObject();
                         System.out.println(targetAddr);
                         Socket peerClient = new Socket(targetAddr, portNum);
 
-                        /*
-                         * byte[] fileContent = "tien".getBytes("UTF-8");
-                         * String newFileName = "newFile.txt";
-                         * 
-                         * saveFile(newFileName, fileContent);
-                         */
                         ObjectOutputStream peerOs = new ObjectOutputStream(peerClient.getOutputStream());
                         ObjectInputStream peerIs = new ObjectInputStream(peerClient.getInputStream());
 
@@ -151,9 +139,6 @@ public class Client implements Runnable {
     }
 
     private static void saveFile(String filename, byte[] fileContent) {
-        // Lưu nội dung file vào thư mục
-        // Trong ví dụ này, mình giả sử thư mục lưu trữ file nằm trong thư mục gốc của
-        // dự án
         String folderPath = "receivedFile/";
         String filePath = folderPath + filename;
 
@@ -172,6 +157,7 @@ public class Client implements Runnable {
         while (file.exists()) {
             filePath = filePath + "(" + Integer.toString(i) + ")";
             file = new File(filePath);
+            i++;
             // return;
         }
 
@@ -198,18 +184,13 @@ public class Client implements Runnable {
     }
 
     @Override
-    public void run() { // hàm này ko chạy
+    public void run() {
         try {
             while (true) {
-                // System.out.println("condition work");
                 Socket peerServer = serverSocket.accept();
                 System.out.println("peer server work");
-                // ObjectInputStream is = new ObjectInputStream(peerServer.getInputStream());
-                // String requestedFile = (String) is.readObject();
-                // System.out.println(requestedFile);
                 peerConnection peerHandler = new peerConnection(peerServer);
                 peerHandler.start();
-                // System.out.println("problem here ");
             }
 
         } catch (IOException e) {
@@ -231,7 +212,6 @@ public class Client implements Runnable {
                 is = new ObjectInputStream(peerServer.getInputStream());
                 System.out.println(is);
                 os = new ObjectOutputStream(peerServer.getOutputStream());
-                // chỗ này ko work
             } catch (IOException e) {
                 e.printStackTrace();
             }
