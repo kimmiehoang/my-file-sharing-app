@@ -170,7 +170,8 @@ public class Client implements Runnable {
 
     private static void saveFile(String filename, byte[] fileContent) {
         String folderPath = "receivedFile/";
-        String filePath = folderPath + filename;
+        String originalFilePath = folderPath + filename;
+        String filePath = originalFilePath;
 
         // Kiểm tra xem thư mục lưu trữ đã tồn tại chưa
         File folder = new File(folderPath);
@@ -185,7 +186,7 @@ public class Client implements Runnable {
         File file = new File(filePath);
         int i = 1;
         while (file.exists()) {
-            filePath = filePath + "(" + Integer.toString(i) + ")";
+            filePath = originalFilePath + "(" + Integer.toString(i) + ")";
             file = new File(filePath);
             i++;
             // return;
