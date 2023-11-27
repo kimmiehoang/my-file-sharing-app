@@ -47,6 +47,7 @@ public class Server {
 
     public void handleClient(Socket socketOfServer) {
         try {
+            System.out.println("Server work ok");
             ObjectInputStream is = new ObjectInputStream(socketOfServer.getInputStream());
             ObjectOutputStream os = new ObjectOutputStream(socketOfServer.getOutputStream());
 
@@ -91,6 +92,19 @@ public class Server {
                         continue;
                     }
 
+                    // String targetClient = (String) is.readObject();
+                    // int portNum = getPort(targetClient);
+                    // InetAddress targetAddr = getAddr(targetClient);
+                    // System.out.print("targetClient to fetch: " + targetClient + ", its portNum: "
+                    // + portNum
+                    // + ", its InetAddress: " + targetAddr);
+                    // os.writeObject(Integer.valueOf(portNum));
+                    // os.flush();
+
+                    // os.writeObject(targetAddr);
+                    // os.flush();
+
+                } else if (cmd.startsWith("CHOOSE")) {
                     String targetClient = (String) is.readObject();
                     int portNum = getPort(targetClient);
                     InetAddress targetAddr = getAddr(targetClient);
@@ -101,6 +115,7 @@ public class Server {
 
                     os.writeObject(targetAddr);
                     os.flush();
+
                 } else if (cmd.startsWith("QUIT")) {
                     os.writeObject(
                             "Goodbye " + hostname + ". Thanks for taking your time to use our file sharing app.");

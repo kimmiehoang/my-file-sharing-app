@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
+import java.util.Scanner;
 
 public class Client implements Runnable {
 
@@ -12,20 +13,28 @@ public class Client implements Runnable {
     private static boolean sign = false;
     private static FileRepository localRepository;
     private static String host;
+    private static String result;
+    private static String tempFileContent;
+    private static Socket peerClient = null;
+    private static ObjectOutputStream peerOs = null;
+    private static ObjectInputStream peerIs = null;
 
     public static void main(String[] args) {
         try {
             try {
-                Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+                Enumeration<NetworkInterface> networkInterfaces = NetworkInterface
+                        .getNetworkInterfaces();
                 while (networkInterfaces.hasMoreElements()) {
                     NetworkInterface networkInterface = networkInterfaces.nextElement();
                     if (networkInterface.getName().startsWith("w")) {
                         Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
                         while (inetAddresses.hasMoreElements()) {
                             InetAddress inetAddress = inetAddresses.nextElement();
-                            if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(":") == -1) {
+                            if (!inetAddress.isLoopbackAddress()
+                                    && inetAddress.getHostAddress().indexOf(":") == -1) {
                                 host = inetAddress.getHostAddress();
-                                // System.out.println("WiFi IPv4 Address: " + inetAddress.getHostAddress());
+                                // System.out.println("WiFi IPv4 Address: " +
+                                // inetAddress.getHostAddress());
                             }
                         }
                     }
@@ -33,131 +42,301 @@ public class Client implements Runnable {
             } catch (SocketException e) {
                 e.printStackTrace();
             }
-
-            socketOfClient = new Socket("192.168.1.5", 9000);
-            // serverSocket = new ServerSocket(0);
             serverSocket = new ServerSocket(0, 50, InetAddress.getByName(host));
-            // Addr = InetAddress.getLocalHost();
-            // String host = Addr.getHostAddress();
-            // System.out.println(InetAddress.getByName("192.168.1.5"));
-
-            // serverSocket = new ServerSocket(0, 50, Addr);
-
-            // System.out.println(Addr);
-
             new Thread(new Client()).start();
-            os = new ObjectOutputStream(socketOfClient.getOutputStream());
-            is = new ObjectInputStream(socketOfClient.getInputStream());
-            inputLine = new BufferedReader(new InputStreamReader(System.in));
-            localRepository = new FileRepository();
-            System.out.println("listening server on port: " + socketOfClient.getLocalPort()
-                    + ", listening peer connection on port: " + serverSocket.getLocalPort());
 
-        } catch (UnknownHostException e) {
-            System.err.println("UnknownHost");
         } catch (IOException e) {
-            System.err.println("No Server found");
+            System.out.println("Server Socket can't be created");
         }
 
-        if (socketOfClient != null && serverSocket != null && os != null && is != null) {
+        String tempFile = args[0];
+        while (!sign) {
             try {
+                File file = new File(tempFile);
+                Scanner fileScanner = new Scanner(file);
 
-                System.out.print("Enter your hostname: ");
-                String hostname = inputLine.readLine().trim();
+                if (fileScanner.hasNextLine()) {
+                    tempFileContent = fileScanner.nextLine();
+                    fileScanner.close();
 
-                os.writeObject(hostname);
-                os.flush();
+                    ///////////////////////
+                    if (tempFileContent.equals("")) {
+                        try {
+                            // try {
+                            // Enumeration<NetworkInterface> networkInterfaces = NetworkInterface
+                            // .getNetworkInterfaces();
+                            // while (networkInterfaces.hasMoreElements()) {
+                            // NetworkInterface networkInterface = networkInterfaces.nextElement();
+                            // if (networkInterface.getName().startsWith("w")) {
+                            // Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                            // while (inetAddresses.hasMoreElements()) {
+                            // InetAddress inetAddress = inetAddresses.nextElement();
+                            // if (!inetAddress.isLoopbackAddress()
+                            // && inetAddress.getHostAddress().indexOf(":") == -1) {
+                            // host = inetAddress.getHostAddress();
+                            // // System.out.println("WiFi IPv4 Address: " +
+                            // // inetAddress.getHostAddress());
+                            // }
+                            // }
+                            // }
+                            // }
+                            // } catch (SocketException e) {
+                            // e.printStackTrace();
+                            // }
 
-                os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
-                os.flush();
-                // System.out.print("serverSocket: " + serverSocket.getInetAddress());
+                            socketOfClient = new Socket("192.168.1.8", 9000);
+                            // serverSocket = new ServerSocket(0);
+                            // serverSocket = new ServerSocket(0, 50, InetAddress.getByName(host));
+                            // // Addr = InetAddress.getLocalHost();
+                            // // String host = Addr.getHostAddress();
+                            // // System.out.println(InetAddress.getByName("192.168.1.5"));
 
-                os.writeObject(serverSocket.getInetAddress());
-                os.flush();
+                            // // serverSocket = new ServerSocket(0, 50, Addr);
 
-                String responseLine = (String) is.readObject();
-                System.out.println(responseLine);
-                System.out.println(
-                        "Follow these syntaxes:\n1. PUBLISH filename filepath\n2. FETCH filename\n3. QUIT");
+                            // // System.out.println(Addr);
 
-                while (!sign) {
+                            // new Thread(new Client()).start();
+                            os = new ObjectOutputStream(socketOfClient.getOutputStream());
+                            is = new ObjectInputStream(socketOfClient.getInputStream());
+                            // inputLine = new BufferedReader(new InputStreamReader(System.in));
+                            localRepository = new FileRepository();
+                            // System.out.println("listening server on port: " +
+                            // socketOfClient.getLocalPort()
+                            // + ", listening peer connection on port: " + serverSocket.getLocalPort());
 
-                    System.out.print("Enter your command: ");
-                    String cmd = inputLine.readLine().trim();
-
-                    if (cmd.startsWith("PUBLISH")) {
-                        os.writeObject(cmd);
-                        os.flush();
-                        String[] data = cmd.split(" ");
-                        publish(data[1], data[2]);
-
-                        responseLine = (String) is.readObject();
-                        System.out.println(responseLine);
-
-                    } else if (cmd.startsWith("FETCH")) {
-                        os.writeObject(cmd);
-                        os.flush();
-
-                        String[] data = cmd.split(" ");
-                        String filename = data[1];
-
-                        responseLine = (String) is.readObject();
-                        if (responseLine.equals("")) {
-                            System.out.println("Sorry. No clients have got your requested file");
-                            continue;
+                            // Thread.sleep(1000);
+                        } catch (UnknownHostException e) {
+                            // System.err.println("UnknownHost");
+                            try {
+                                String result = "UnknownHost";
+                                System.out.println(result);
+                                FileWriter writer = new FileWriter(tempFile);
+                                writer.write(result);
+                                writer.close();
+                                continue;
+                                // Thread.sleep(1000);
+                            } catch (Exception ee) {
+                                ee.printStackTrace();
+                            }
+                        } catch (IOException e) {
+                            // System.err.println("No Server found");
+                            try {
+                                String result = "No Server found";
+                                System.out.println(result);
+                                FileWriter writer = new FileWriter(tempFile);
+                                writer.write(result);
+                                writer.close();
+                                continue;
+                                // Thread.sleep(1000);
+                            } catch (Exception ee) {
+                                ee.printStackTrace();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        System.out.println(responseLine);
 
-                        System.out.print("Select one hostname from hostname list above: ");
-                        String targetClient = inputLine.readLine().trim();
+                        if (socketOfClient != null && serverSocket != null && os != null && is != null) {
 
-                        os.writeObject(targetClient);
-                        os.flush();
+                            try {
+                                String result = "Start successfully";
+                                System.out.println(result);
+                                FileWriter writer = new FileWriter(tempFile);
+                                writer.write(result);
+                                writer.close();
+                                Thread.sleep(1000);
+                            } catch (Exception ee) {
+                                ee.printStackTrace();
+                            }
 
-                        int portNum = ((Integer) is.readObject()).intValue();
+                        }
 
-                        InetAddress targetAddr = (InetAddress) is.readObject();
-                        // System.out.println(targetAddr);
-                        Socket peerClient = new Socket(targetAddr, portNum);
+                    } else if (tempFileContent.startsWith("HOSTNAME") || tempFileContent.startsWith("PUBLISH")
+                            || tempFileContent.startsWith("FETCH") || tempFileContent.startsWith("CHOOSE")
+                            || tempFileContent.startsWith("QUIT")) {
 
-                        ObjectOutputStream peerOs = new ObjectOutputStream(peerClient.getOutputStream());
-                        ObjectInputStream peerIs = new ObjectInputStream(peerClient.getInputStream());
+                        ////////////////////////
+                        try {
 
-                        peerOs.writeObject(filename);
-                        peerOs.flush();
+                            //////////////// cho nay can phai dua len gan main function
+                            String responseLine;
 
-                        /////// xử lý file content nhận được
+                            ///////////////////////////////////////////////////////////////
+                            // while (!sign) {
+                            String cmd = tempFileContent;
 
-                        byte[] fileContent = (byte[]) peerIs.readObject();
-                        System.out.println(fileContent + "bbbb");
+                            if (cmd.startsWith("HOSTNAME")) {
 
-                        String newFileName = "newFile.txt";
-                        saveFile(newFileName, fileContent);
+                                // try {
+                                // String result = "HERE";
+                                // System.out.println(result);
+                                // FileWriter writer = new FileWriter(tempFile);
+                                // writer.write(result);
+                                // writer.close();
+                                // // continue;
+                                // // Thread.sleep(1000);
+                                // } catch (Exception ee) {
+                                // ee.printStackTrace();
+                                // }
 
-                        localRepository.files.put(filename, fileContent);
+                                String[] data = cmd.split(" ");
 
-                        System.out.println(filename + " was downloaded successfully");
+                                os.writeObject(data[1]);
+                                os.flush();
 
-                        peerIs.close();
-                        peerOs.close();
-                        peerClient.close();
-                    } else {
-                        os.writeObject("QUIT");
-                        responseLine = (String) is.readObject();
-                        System.out.println(responseLine);
-                        if (responseLine.startsWith("Goodbye")) {
-                            sign = true;
+                                os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
+                                os.flush();
+                                // System.out.print("serverSocket: " + serverSocket.getInetAddress());
+
+                                os.writeObject(serverSocket.getInetAddress());
+                                os.flush();
+
+                                String res = (String) is.readObject();
+
+                                try {
+                                    String result = "Welcome " + data[1] + "! " + res;
+                                    System.out.println(result);
+                                    FileWriter writer = new FileWriter(tempFile);
+                                    writer.write(result);
+                                    writer.close();
+
+                                } catch (Exception ee) {
+                                    ee.printStackTrace();
+                                }
+
+                            } else if (cmd.startsWith("PUBLISH")) {
+                                os.writeObject(cmd);
+                                os.flush();
+                                String[] data = cmd.split(" ");
+                                publish(data[1], data[2]);
+                                String res = (String) is.readObject();
+
+                                try {
+                                    String result = res;
+                                    System.out.println(result);
+                                    FileWriter writer = new FileWriter(tempFile);
+                                    writer.write(result);
+                                    writer.close();
+
+                                } catch (Exception ee) {
+                                    ee.printStackTrace();
+                                }
+
+                            } else if (cmd.startsWith("FETCH")) {
+                                os.writeObject(cmd);
+                                os.flush();
+
+                                // String[] data = cmd.split(" ");
+                                // String filename = data[1];
+
+                                responseLine = (String) is.readObject();
+                                if (responseLine.equals("")) {
+
+                                    try {
+                                        String result = "Sorry. No clients have got your requested file";
+                                        System.out.println(result);
+                                        FileWriter writer = new FileWriter(tempFile);
+                                        writer.write(result);
+                                        writer.close();
+
+                                    } catch (Exception ee) {
+                                        ee.printStackTrace();
+                                    }
+                                } else {
+                                    try {
+                                        String result = responseLine
+                                                + " Select one hostname from hostname list above! Using CHOOSE hostname filename";
+                                        System.out.println(result);
+                                        FileWriter writer = new FileWriter(tempFile);
+                                        writer.write(result);
+                                        writer.close();
+
+                                    } catch (Exception ee) {
+                                        ee.printStackTrace();
+                                    }
+                                }
+
+                            } else if (cmd.startsWith("CHOOSE")) {
+                                os.writeObject(cmd);
+                                os.flush();
+
+                                String[] data = cmd.split(" ");
+                                String targetClient = data[1];
+                                String filename = data[2];
+
+                                os.writeObject(targetClient);
+                                os.flush();
+
+                                int portNum = ((Integer) is.readObject()).intValue();
+
+                                InetAddress targetAddr = (InetAddress) is.readObject();
+
+                                // System.out.println(targetAddr);
+                                peerClient = new Socket(targetAddr, portNum);
+
+                                peerOs = new ObjectOutputStream(peerClient.getOutputStream());
+                                peerIs = new ObjectInputStream(peerClient.getInputStream());
+
+                                peerOs.writeObject(filename);
+                                peerOs.flush();
+
+                                /////// xử lý file content nhận được
+
+                                byte[] fileContent = (byte[]) peerIs.readObject();
+                                // System.out.println(fileContent + "bbbb");
+
+                                String newFileName = "newFile.txt";
+                                saveFile(newFileName, fileContent);
+
+                                try {
+                                    String result = filename + " was downloaded successfully";
+                                    System.out.println(result);
+                                    FileWriter writer = new FileWriter(tempFile);
+                                    writer.write(result);
+                                    writer.close();
+
+                                } catch (Exception ee) {
+                                    ee.printStackTrace();
+                                }
+
+                                // localRepository.files.put(filename, fileContent);
+
+                                // System.out.println(filename + " was downloaded successfully");
+
+                                peerIs.close();
+                                peerOs.close();
+                                peerClient.close();
+                            } else if (cmd.startsWith("QUIT")) {
+                                os.writeObject("QUIT");
+                                os.close();
+                                is.close();
+                                socketOfClient.close();
+                                System.exit(0);
+                                sign = true;
+
+                                // responseLine = (String) is.readObject();
+                                // System.out.println(responseLine);
+                                // if (responseLine.startsWith("Goodbye")) {
+                                // // sign = true;
+                                // os.close();
+                                // is.close();
+                                // socketOfClient.close();
+                                // System.exit(0);
+                                // }
+                            }
+
+                            Thread.sleep(1000);
+
+                        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
+                Thread.sleep(1000);
 
-                os.close();
-                is.close();
-                socketOfClient.close();
-
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (Exception ee) {
+                ee.printStackTrace();
             }
+
         }
 
     }
@@ -169,7 +348,7 @@ public class Client implements Runnable {
     }
 
     private static void saveFile(String filename, byte[] fileContent) {
-        String folderPath = "receivedFile/";
+        String folderPath = "../receivedFile/";
         String originalFilePath = folderPath + filename;
         String filePath = originalFilePath;
 
