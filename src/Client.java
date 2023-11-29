@@ -84,7 +84,7 @@ public class Client implements Runnable {
                             // e.printStackTrace();
                             // }
 
-                            socketOfClient = new Socket("192.168.1.8", 9000);
+                            socketOfClient = new Socket("192.168.1.5", 9000);
                             // serverSocket = new ServerSocket(0);
                             // serverSocket = new ServerSocket(0, 50, InetAddress.getByName(host));
                             // // Addr = InetAddress.getLocalHost();
@@ -310,7 +310,7 @@ public class Client implements Runnable {
                                 os.close();
                                 is.close();
                                 socketOfClient.close();
-                                System.exit(0);
+                                // System.exit(0);
                                 sign = true;
 
                                 // responseLine = (String) is.readObject();
@@ -396,7 +396,7 @@ public class Client implements Runnable {
     @Override
     public void run() {
         try {
-            while (true) {
+            while (!sign) {
                 Socket peerServer = serverSocket.accept();
                 // System.out.println("peer server work");
                 peerConnection peerHandler = new peerConnection(peerServer);
@@ -410,8 +410,8 @@ public class Client implements Runnable {
 
     class peerConnection extends Thread {
         private Socket peerServer;
-        private ObjectInputStream is;
-        private ObjectOutputStream os;
+        private ObjectInputStream peerIs;
+        private ObjectOutputStream peerOs;
 
         public peerConnection(Socket peerServer) {
             this.peerServer = peerServer;
@@ -419,25 +419,49 @@ public class Client implements Runnable {
 
         public void run() {
             try {
-                is = new ObjectInputStream(peerServer.getInputStream());
+                peerIs = new ObjectInputStream(peerServer.getInputStream());
                 // System.out.println(is);
-                os = new ObjectOutputStream(peerServer.getOutputStream());
+                peerOs = new ObjectOutputStream(peerServer.getOutputStream());
             } catch (IOException e) {
                 e.printStackTrace();
             }
             try {
-                String requestedFile = (String) is.readObject();
-                // System.out.println(requestedFile);
+                String request = (String) peerIs.readObject();
+                if (request.startsWith("Ping")) {
+                    if (sign == true) {
+                        peerIs.close();
+                        peerOs.close();
+                        peerServer.close();
+                    }
 
-                // System.out.println("The requested file is " + requestedFile);
-                byte[] fileContent = localRepository.getFileContent(requestedFile);
+                    while (!request.startsWith("EndPing")) {
+                        peerOs.writeObject(
+                                "Received ping message successfully at " + System.currentTimeMillis());
+                        peerOs.flush();
+                        request = (String) peerIs.readObject();
+                    }
+                    peerIs.close();
+                    peerOs.close();
+                    peerServer.close();
+                } else {
+                    if (sign == true) {
+                        peerIs.close();
+                        peerOs.close();
+                        peerServer.close();
+                    }
+                    String requestedFile = request;
+                    // System.out.println(requestedFile);
 
-                os.writeObject(fileContent);
-                os.flush();
+                    // System.out.println("The requested file is " + requestedFile);
+                    byte[] fileContent = localRepository.getFileContent(requestedFile);
 
-                is.close();
-                is.close();
-                peerServer.close();
+                    peerOs.writeObject(fileContent);
+                    peerOs.flush();
+
+                    peerIs.close();
+                    peerOs.close();
+                    peerServer.close();
+                }
 
             } catch (IOException | ClassNotFoundException e) {
                 System.err.print("A FileTransfer process went wrong");

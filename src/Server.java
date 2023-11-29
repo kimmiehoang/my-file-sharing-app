@@ -1,8 +1,9 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Scanner;
 
-public class Server {
+public class Server implements Runnable {
 
     private class ClientInfo {
         public final String hostname;
@@ -21,29 +22,9 @@ public class Server {
     }
 
     private static ServerSocket serverSocket;
-    private ArrayList<ClientInfo> listOfClients = new ArrayList<ClientInfo>();
-
-    public void startServer() {
-        try {
-
-            System.out.println("Starting Server....");
-            serverSocket = new ServerSocket(9000);
-            System.out.println("Server Socket has been created. Server is running on port 9000");
-
-        } catch (IOException e) {
-            System.out.println("Server Socket can't be created");
-        }
-
-        try {
-            while (true) {
-                Socket socketOfServer = serverSocket.accept();
-                Thread clientHandler = new Thread(() -> handleClient(socketOfServer));
-                clientHandler.start();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private static ArrayList<ClientInfo> listOfClients = new ArrayList<ClientInfo>();
+    private static boolean sign = false;
+    private static String tempFileContent;
 
     public void handleClient(Socket socketOfServer) {
         try {
@@ -108,8 +89,9 @@ public class Server {
                     String targetClient = (String) is.readObject();
                     int portNum = getPort(targetClient);
                     InetAddress targetAddr = getAddr(targetClient);
-                    System.out.print("targetClient to fetch: " + targetClient + ", its portNum: " + portNum
-                            + ", its InetAddress: " + targetAddr);
+                    // System.out.print("targetClient to fetch: " + targetClient + ", its portNum: "
+                    // + portNum
+                    // + ", its InetAddress: " + targetAddr);
                     os.writeObject(Integer.valueOf(portNum));
                     os.flush();
 
@@ -158,7 +140,7 @@ public class Server {
         return response.toString();
     }
 
-    public int getPort(String hostname) {
+    public static int getPort(String hostname) {
         int portNum = 0;
         for (ClientInfo client : listOfClients) {
             if (client.hostname.equals(hostname)) {
@@ -168,7 +150,7 @@ public class Server {
         return portNum;
     }
 
-    public InetAddress getAddr(String hostname) {
+    public static InetAddress getAddr(String hostname) {
         InetAddress addr = null;
         for (ClientInfo client : listOfClients) {
             if (client.hostname.equals(hostname)) {
@@ -178,8 +160,111 @@ public class Server {
         return addr;
     }
 
+    // private static String discover(String hostname) {
+    // StringBuilder response = new StringBuilder(
+    // "*********************************\nList of files in local repository of host
+    // named " + hostname);
+    // for (ClientInfo cur : listOfClients) {
+    // if (cur.hostname == hostname) {
+    // for (String filename : cur.listOfFiles) {
+    // response.append("\n- ").append(filename);
+    // }
+    // }
+    // }
+    // response.append("\n*********************************");
+    // return response.toString();
+    // }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                Socket socketOfServer = serverSocket.accept();
+                Thread clientHandler = new Thread(() -> handleClient(socketOfServer));
+                clientHandler.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        Server server = new Server();
-        server.startServer();
+        try {
+
+            System.out.println("Starting Server....");
+            serverSocket = new ServerSocket(9000);
+            System.out.println("Server Socket has been created. Server is running on port 9000");
+
+        } catch (IOException e) {
+            System.out.println("Server Socket can't be created");
+        }
+        new Thread(new Server()).start();
+
+        String tempFile = args[0];
+
+        while (!sign) {
+            try {
+                File file = new File(tempFile);
+                Scanner fileScanner = new Scanner(file);
+
+                if (fileScanner.hasNextLine()) {
+                    tempFileContent = fileScanner.nextLine();
+                    fileScanner.close();
+
+                    if (tempFileContent.startsWith("DISCOVER")) {
+                        String[] info = tempFileContent.split(" ");
+                        String hostname = info[1];
+
+                        StringBuilder response = new StringBuilder(
+                                "*********************************\nList of files in local repository of host named "
+                                        + hostname);
+                        for (ClientInfo cur : listOfClients) {
+                            if (cur.hostname.equals(hostname)) {
+                                for (String nameOfFile : cur.listOfFiles) {
+                                    response.append("\n- ").append(nameOfFile);
+                                }
+                                break;
+                            }
+                        }
+                        response.append("\n*********************************");
+                        // Thread.sleep(1000);
+
+                        String result = response.toString();
+                        System.out.println(result);
+                        FileWriter writer = new FileWriter(tempFile);
+                        writer.write(result);
+                        writer.close();
+
+                    } else if (tempFileContent.startsWith("PING")) {
+                        String[] info = tempFileContent.split(" ");
+                        String hostname = info[1];
+
+                        for (ClientInfo cur : listOfClients) {
+                            if (cur.hostname.equals(hostname)) {
+                                int portNum = getPort(cur.hostname);
+                                InetAddress targetAddr = getAddr(cur.hostname);
+                                Socket serverToClient = new Socket(targetAddr, portNum);
+
+                                ObjectOutputStream serverOs = new ObjectOutputStream(serverToClient.getOutputStream());
+                                ObjectInputStream serverIs = new ObjectInputStream(serverToClient.getInputStream());
+                                Ping.ping(serverOs, serverIs, tempFile, cur.hostname);
+                                serverIs.close();
+                                serverOs.close();
+                                serverToClient.close();
+                                break;
+                            }
+                        }
+                        // Thread.sleep(2000);
+                    } else if (tempFileContent.startsWith(" QUIT")) {
+                        sign = true;
+                    }
+
+                }
+                Thread.sleep(1000);
+            } catch (Exception ee) {
+                ee.printStackTrace();
+            }
+        }
+
     }
 }

@@ -2,8 +2,8 @@
 $JavaPath = "C:\Program Files\Java\jdk-21\bin\java.exe"  # Đảm bảo là đường dẫn đúng
 
 # Tên lớp Java
-$JavaClass = "Client"
-$tempFilePath = "E:\my-file-sharing-app\repo\tempFileClient.txt"
+$JavaClass = "Server"
+$tempFilePath = "E:\my-file-sharing-app\repo\tempFileServer.txt"
 $tempFile = $tempFilePath
 # Tạo tệp tạm để chứa lệnh và kết quả
 #$tempFile = [System.IO.Path]::GetTempFileName()
@@ -22,20 +22,20 @@ if ($null -eq $JavaProcess) {
     exit
 }
 
-while ($true) {
-    $output = Get-Content -Path $tempFile -Raw
-    # Write-Host "Result: $output"
-    if ($output -match "No Server found" -or $output -match "UnknownHost") {
-        Write-Host "Error: $output"
-        #$JavaProcess.WaitForExit()
-        #Remove-Item -Path $tempFile -Force
-        exit
-    }
-    if ($output -match "Start successfully") {
-        Write-Host "Register your hostname first. Follow the command HOSTNAME name"
-        break
-    }
-}
+# while ($true) {
+#     $output = Get-Content -Path $tempFile -Raw
+#     # Write-Host "Result: $output"
+#     if ($output -match "No Server found" -or $output -match "UnknownHost") {
+#         Write-Host "Error: $output"
+#         #$JavaProcess.WaitForExit()
+#         #Remove-Item -Path $tempFile -Force
+#         exit
+#     }
+#     if ($output -match "Start successfully") {
+#         Write-Host "Register your hostname first. Follow the command HOSTNAME name"
+#         break
+#     }
+# }
 
 # Nhập các lệnh từ bàn phím và ghi vào tệp tạm
 while ($true) {
