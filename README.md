@@ -4,7 +4,7 @@ Make sure the server work successfully!
 
 # For server, enter the following command:
 1. cd src // move to src
-2. java Server
+2. ./runServer.ps1
 
 # For client, enter the following command:
 1. cd src // move to src
