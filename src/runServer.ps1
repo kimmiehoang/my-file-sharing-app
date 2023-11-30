@@ -57,13 +57,15 @@ while ($true) {
         $command | Out-File -FilePath $tempFile -Encoding ASCII
 
         # Chờ JavaProcess đọc và xử lý lệnh
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
 
         # Đọc kết quả từ tệp tạm
         $output = Get-Content -Path $tempFile -Raw
 
         # In kết quả
         Write-Host "Result: $output"
+
+        #Start-Sleep -Seconds 1
 
     }
     catch {

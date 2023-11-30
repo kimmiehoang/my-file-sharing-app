@@ -18,11 +18,9 @@ public class FileRepository {
             // Read the content of the file from the local file system in chunks
             byte[] content = readFile(filePath);
 
-            // System.out.println(content);
-
             files.put(fileName, content);
             size++;
-            System.out.println("File published successfully.");
+
         } catch (IOException e) {
             System.out.println("Error reading file: " + e.getMessage());
         }

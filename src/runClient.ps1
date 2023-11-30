@@ -64,7 +64,8 @@ while ($true) {
 
         # In kết quả
         Write-Host "Result: $output"
-
+        
+        Start-Sleep -Seconds 1
     }
     catch {
         Write-Host "Failed to start Java process. Error: $_"

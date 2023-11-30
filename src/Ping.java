@@ -15,9 +15,6 @@ public class Ping {
             int packetsReceived = 0;
             String pingContent = "Ping";
             long min = 999999, max = -999999, total = 0;
-            // System.out.println("Pinging " +
-            // clientSocket.getInetAddress().getHostAddress() + " with "
-            // + pingContent.length() + " bytes of data:");
 
             StringBuilder response = new StringBuilder("\nPing statistics for " + username + "\n");
 
@@ -44,10 +41,6 @@ public class Ping {
                     response.append("\n- Reply from ").append(username).append(": bytes=").append(clientReply.length())
                             .append(" time=").append(roundTripTime).append("ms content: ").append(clientReply);
 
-                    // System.out.println("Reply from " +
-                    // clientSocket.getInetAddress().getHostAddress() +
-                    // ": bytes=" + clientReply.length() + " time=" + roundTripTime + "ms content: "
-                    // + clientReply);
                     packetsReceived++;
                     if (roundTripTime < min)
                         min = roundTripTime;
@@ -57,13 +50,10 @@ public class Ping {
                 } else {
                     response.append("\n");
                     response.append("Reply from ").append(username).append(": No reply");
-                    // System.out.println("Reply from " +
-                    // clientSocket.getInetAddress().getHostAddress() +
-                    // ": No reply");
+
                 }
                 packetsSent++;
 
-                // Sleep for 1s before the next ping
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -80,20 +70,13 @@ public class Ping {
             response.append("\nPackets: Sent = ").append(packetsSent).append(", Received = ").append(packetsReceived)
                     .append(", Lost = ").append(loss).append(" (").append(percentLost).append("% loss)");
 
-            // System.out.println("\nPing statistics for " +
-            // clientSocket.getInetAddress().getHostAddress() + ":");
-            // System.out.println(" Packets: Sent = " + packetsSent + ", Received = " +
-            // packetsReceived +
-            // ", Lost = " + (packetsSent - packetsReceived) + " ("
-            // + ((packetsSent - packetsReceived) * 100 / packetsSent) + "% loss)");
             response.append("\n");
             response.append("\nApproximate round trip times in milli-seconds:");
             float avg = total / packetsReceived;
-            // System.out.println("Approximate round trip times in milli-seconds:");
+
             response.append("     Minimum = ").append(min).append("ms, Maximum = ").append(max).append("ms, Average = ")
                     .append(avg).append("ms");
-            // System.out.println(" Minimum = " + min + "ms, Maximum = " + max +
-            // "ms, Average = " + total / packetsReceived + "ms");
+
             String result = response.toString();
             System.out.println(result);
             FileWriter writer = new FileWriter(tempFile);

@@ -9,11 +9,9 @@ public class Client implements Runnable {
     private static ServerSocket serverSocket = null;
     private static ObjectOutputStream os = null;
     private static ObjectInputStream is = null;
-    private static BufferedReader inputLine = null;
     private static boolean sign = false;
     private static FileRepository localRepository;
     private static String host;
-    private static String result;
     private static String tempFileContent;
     private static Socket peerClient = null;
     private static ObjectOutputStream peerOs = null;
@@ -33,8 +31,7 @@ public class Client implements Runnable {
                             if (!inetAddress.isLoopbackAddress()
                                     && inetAddress.getHostAddress().indexOf(":") == -1) {
                                 host = inetAddress.getHostAddress();
-                                // System.out.println("WiFi IPv4 Address: " +
-                                // inetAddress.getHostAddress());
+
                             }
                         }
                     }
@@ -62,51 +59,16 @@ public class Client implements Runnable {
                     ///////////////////////
                     if (tempFileContent.equals("")) {
                         try {
-                            // try {
-                            // Enumeration<NetworkInterface> networkInterfaces = NetworkInterface
-                            // .getNetworkInterfaces();
-                            // while (networkInterfaces.hasMoreElements()) {
-                            // NetworkInterface networkInterface = networkInterfaces.nextElement();
-                            // if (networkInterface.getName().startsWith("w")) {
-                            // Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-                            // while (inetAddresses.hasMoreElements()) {
-                            // InetAddress inetAddress = inetAddresses.nextElement();
-                            // if (!inetAddress.isLoopbackAddress()
-                            // && inetAddress.getHostAddress().indexOf(":") == -1) {
-                            // host = inetAddress.getHostAddress();
-                            // // System.out.println("WiFi IPv4 Address: " +
-                            // // inetAddress.getHostAddress());
-                            // }
-                            // }
-                            // }
-                            // }
-                            // } catch (SocketException e) {
-                            // e.printStackTrace();
-                            // }
 
-                            socketOfClient = new Socket("192.168.1.5", 9000);
-                            // serverSocket = new ServerSocket(0);
-                            // serverSocket = new ServerSocket(0, 50, InetAddress.getByName(host));
-                            // // Addr = InetAddress.getLocalHost();
-                            // // String host = Addr.getHostAddress();
-                            // // System.out.println(InetAddress.getByName("192.168.1.5"));
+                            socketOfClient = new Socket("192.168.41.52", 9000);
 
-                            // // serverSocket = new ServerSocket(0, 50, Addr);
-
-                            // // System.out.println(Addr);
-
-                            // new Thread(new Client()).start();
                             os = new ObjectOutputStream(socketOfClient.getOutputStream());
                             is = new ObjectInputStream(socketOfClient.getInputStream());
-                            // inputLine = new BufferedReader(new InputStreamReader(System.in));
-                            localRepository = new FileRepository();
-                            // System.out.println("listening server on port: " +
-                            // socketOfClient.getLocalPort()
-                            // + ", listening peer connection on port: " + serverSocket.getLocalPort());
 
-                            // Thread.sleep(1000);
+                            localRepository = new FileRepository();
+
                         } catch (UnknownHostException e) {
-                            // System.err.println("UnknownHost");
+
                             try {
                                 String result = "UnknownHost";
                                 System.out.println(result);
@@ -114,12 +76,12 @@ public class Client implements Runnable {
                                 writer.write(result);
                                 writer.close();
                                 continue;
-                                // Thread.sleep(1000);
+
                             } catch (Exception ee) {
                                 ee.printStackTrace();
                             }
                         } catch (IOException e) {
-                            // System.err.println("No Server found");
+
                             try {
                                 String result = "No Server found";
                                 System.out.println(result);
@@ -154,29 +116,13 @@ public class Client implements Runnable {
                             || tempFileContent.startsWith("FETCH") || tempFileContent.startsWith("CHOOSE")
                             || tempFileContent.startsWith("QUIT")) {
 
-                        ////////////////////////
                         try {
 
-                            //////////////// cho nay can phai dua len gan main function
                             String responseLine;
 
-                            ///////////////////////////////////////////////////////////////
-                            // while (!sign) {
                             String cmd = tempFileContent;
 
                             if (cmd.startsWith("HOSTNAME")) {
-
-                                // try {
-                                // String result = "HERE";
-                                // System.out.println(result);
-                                // FileWriter writer = new FileWriter(tempFile);
-                                // writer.write(result);
-                                // writer.close();
-                                // // continue;
-                                // // Thread.sleep(1000);
-                                // } catch (Exception ee) {
-                                // ee.printStackTrace();
-                                // }
 
                                 String[] data = cmd.split(" ");
 
@@ -185,7 +131,6 @@ public class Client implements Runnable {
 
                                 os.writeObject(Integer.valueOf(serverSocket.getLocalPort()));
                                 os.flush();
-                                // System.out.print("serverSocket: " + serverSocket.getInetAddress());
 
                                 os.writeObject(serverSocket.getInetAddress());
                                 os.flush();
@@ -224,9 +169,6 @@ public class Client implements Runnable {
                             } else if (cmd.startsWith("FETCH")) {
                                 os.writeObject(cmd);
                                 os.flush();
-
-                                // String[] data = cmd.split(" ");
-                                // String filename = data[1];
 
                                 responseLine = (String) is.readObject();
                                 if (responseLine.equals("")) {
@@ -270,7 +212,6 @@ public class Client implements Runnable {
 
                                 InetAddress targetAddr = (InetAddress) is.readObject();
 
-                                // System.out.println(targetAddr);
                                 peerClient = new Socket(targetAddr, portNum);
 
                                 peerOs = new ObjectOutputStream(peerClient.getOutputStream());
@@ -282,7 +223,6 @@ public class Client implements Runnable {
                                 /////// xử lý file content nhận được
 
                                 byte[] fileContent = (byte[]) peerIs.readObject();
-                                // System.out.println(fileContent + "bbbb");
 
                                 String newFileName = "newFile.txt";
                                 saveFile(newFileName, fileContent);
@@ -298,9 +238,7 @@ public class Client implements Runnable {
                                     ee.printStackTrace();
                                 }
 
-                                // localRepository.files.put(filename, fileContent);
-
-                                // System.out.println(filename + " was downloaded successfully");
+                                localRepository.files.put(filename, fileContent);
 
                                 peerIs.close();
                                 peerOs.close();
@@ -310,18 +248,9 @@ public class Client implements Runnable {
                                 os.close();
                                 is.close();
                                 socketOfClient.close();
-                                // System.exit(0);
+
                                 sign = true;
 
-                                // responseLine = (String) is.readObject();
-                                // System.out.println(responseLine);
-                                // if (responseLine.startsWith("Goodbye")) {
-                                // // sign = true;
-                                // os.close();
-                                // is.close();
-                                // socketOfClient.close();
-                                // System.exit(0);
-                                // }
                             }
 
                             Thread.sleep(1000);
@@ -349,6 +278,7 @@ public class Client implements Runnable {
 
     private static void saveFile(String filename, byte[] fileContent) {
         String folderPath = "../receivedFile/";
+        String temp = folderPath + "newFile";
         String originalFilePath = folderPath + filename;
         String filePath = originalFilePath;
 
@@ -365,10 +295,9 @@ public class Client implements Runnable {
         File file = new File(filePath);
         int i = 1;
         while (file.exists()) {
-            filePath = originalFilePath + "(" + Integer.toString(i) + ")";
+            filePath = temp + "(" + Integer.toString(i) + ").txt";
             file = new File(filePath);
             i++;
-            // return;
         }
 
         // Tạo mới file nếu nó chưa tồn tại
@@ -398,7 +327,7 @@ public class Client implements Runnable {
         try {
             while (!sign) {
                 Socket peerServer = serverSocket.accept();
-                // System.out.println("peer server work");
+
                 peerConnection peerHandler = new peerConnection(peerServer);
                 peerHandler.start();
             }
@@ -420,7 +349,7 @@ public class Client implements Runnable {
         public void run() {
             try {
                 peerIs = new ObjectInputStream(peerServer.getInputStream());
-                // System.out.println(is);
+
                 peerOs = new ObjectOutputStream(peerServer.getOutputStream());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -450,9 +379,7 @@ public class Client implements Runnable {
                         peerServer.close();
                     }
                     String requestedFile = request;
-                    // System.out.println(requestedFile);
 
-                    // System.out.println("The requested file is " + requestedFile);
                     byte[] fileContent = localRepository.getFileContent(requestedFile);
 
                     peerOs.writeObject(fileContent);
