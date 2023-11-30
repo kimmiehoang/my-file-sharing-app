@@ -6,10 +6,10 @@ import java.util.Scanner;
 public class Server implements Runnable {
 
     private class ClientInfo {
-        public final String hostname;
-        public final int portNum;
-        public final InetAddress addr;
-        public final Socket socketOfServer;
+        public String hostname;
+        public int portNum;
+        public InetAddress addr;
+        public Socket socketOfServer;
         public ArrayList<String> listOfFiles;
 
         public ClientInfo(String hostname, int portNum, InetAddress addr, Socket socketOfServer) {
@@ -37,8 +37,7 @@ public class Server implements Runnable {
             int portOfClientListener = ((Integer) is.readObject()).intValue();
 
             InetAddress addr = (InetAddress) is.readObject();
-            System.out.println("hostname: " + hostname + ", its portOfClientListener: " + portOfClientListener
-                    + ", its sockerOfServer's portNum: " + socketOfServer.getLocalPort());
+            
             listOfClients.add(new ClientInfo(hostname, portOfClientListener, addr, socketOfServer));
 
             os.writeObject(
@@ -48,7 +47,7 @@ public class Server implements Runnable {
             while (true) {
                 String cmd = (String) is.readObject();
                 if (cmd.startsWith("PUBLISH")) {
-                    System.out.println(hostname + " is conducting a publish cmd");
+                    
                     String[] data = cmd.split(" ");
                     String filename = data[1];
                     for (ClientInfo cur : listOfClients) {
@@ -72,26 +71,21 @@ public class Server implements Runnable {
                     if (list.equals("")) {
                         continue;
                     }
-
-                    // String targetClient = (String) is.readObject();
-                    // int portNum = getPort(targetClient);
-                    // InetAddress targetAddr = getAddr(targetClient);
-                    // System.out.print("targetClient to fetch: " + targetClient + ", its portNum: "
-                    // + portNum
-                    // + ", its InetAddress: " + targetAddr);
-                    // os.writeObject(Integer.valueOf(portNum));
-                    // os.flush();
-
-                    // os.writeObject(targetAddr);
-                    // os.flush();
+                    else {
+                        for (ClientInfo cur : listOfClients) {
+                            if (cur.hostname.equals(hostname) && cur.socketOfServer == socketOfServer) {
+                                cur.listOfFiles.add(filename);
+                                break;
+                            }
+                        }
+                    }
+                    
 
                 } else if (cmd.startsWith("CHOOSE")) {
                     String targetClient = (String) is.readObject();
                     int portNum = getPort(targetClient);
                     InetAddress targetAddr = getAddr(targetClient);
-                    // System.out.print("targetClient to fetch: " + targetClient + ", its portNum: "
-                    // + portNum
-                    // + ", its InetAddress: " + targetAddr);
+                    
                     os.writeObject(Integer.valueOf(portNum));
                     os.flush();
 
@@ -99,9 +93,7 @@ public class Server implements Runnable {
                     os.flush();
 
                 } else if (cmd.startsWith("QUIT")) {
-                    os.writeObject(
-                            "Goodbye " + hostname + ". Thanks for taking your time to use our file sharing app.");
-                    os.flush();
+                    
                     break;
                 } else {
                     os.writeObject("Your command is invalid.");
@@ -160,20 +152,6 @@ public class Server implements Runnable {
         return addr;
     }
 
-    // private static String discover(String hostname) {
-    // StringBuilder response = new StringBuilder(
-    // "*********************************\nList of files in local repository of host
-    // named " + hostname);
-    // for (ClientInfo cur : listOfClients) {
-    // if (cur.hostname == hostname) {
-    // for (String filename : cur.listOfFiles) {
-    // response.append("\n- ").append(filename);
-    // }
-    // }
-    // }
-    // response.append("\n*********************************");
-    // return response.toString();
-    // }
 
     @Override
     public void run() {
@@ -216,8 +194,8 @@ public class Server implements Runnable {
                         String hostname = info[1];
 
                         StringBuilder response = new StringBuilder(
-                                "*********************************\nList of files in local repository of host named "
-                                        + hostname);
+                                "**************************************************\nList of files in local repository of host named "
+                                        + hostname);                                    
                         for (ClientInfo cur : listOfClients) {
                             if (cur.hostname.equals(hostname)) {
                                 for (String nameOfFile : cur.listOfFiles) {
@@ -226,8 +204,8 @@ public class Server implements Runnable {
                                 break;
                             }
                         }
-                        response.append("\n*********************************");
-                        // Thread.sleep(1000);
+                        response.append("\n**********************************************************");
+                        
 
                         String result = response.toString();
                         System.out.println(result);
@@ -254,7 +232,7 @@ public class Server implements Runnable {
                                 break;
                             }
                         }
-                        // Thread.sleep(2000);
+                        
                     } else if (tempFileContent.startsWith(" QUIT")) {
                         sign = true;
                     }

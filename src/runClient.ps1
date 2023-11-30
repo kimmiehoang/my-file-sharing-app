@@ -3,7 +3,7 @@ $JavaPath = "C:\Program Files\Java\jdk-21\bin\java.exe"  # Đảm bảo là đư
 
 # Tên lớp Java
 $JavaClass = "Client"
-$tempFilePath = "E:\my-file-sharing-app\repo\tempFileClient.txt"
+$tempFilePath = "D:\tempFileClient.txt"
 $tempFile = $tempFilePath
 # Tạo tệp tạm để chứa lệnh và kết quả
 #$tempFile = [System.IO.Path]::GetTempFileName()
